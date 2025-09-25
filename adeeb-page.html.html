@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages from Mom - Adeeb's Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff; min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; width: 100%; background: rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 30px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .messages-container { background: rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; max-height: 500px; overflow-y: auto; }
+        .message { margin-bottom: 20px; padding: 15px; border-radius: 10px; background: rgba(255, 255, 255, 0.15); }
+        .connection-status { position: fixed; top: 10px; right: 10px; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
+        .connected { background: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">Connecting...</div>
+    <div class="container">
+        <header>
+            <h1>Messages from Mom</h1>
+            <h2>Rafat Fatima's Birthday App</h2>
+        </header>
+        <div class="messages-container" id="messagesContainer">
+            <div id="noMessages"><p>No messages yet. When mom sends a message, it will appear here.</p></div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('YOUR_BACKEND_URL_HERE');
+        
+        socket.on('connect', () => {
+            document.getElementById('connectionStatus').textContent = 'Connected ✓';
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+        });
+        
+        socket.on('newMessage', (message) => {
+            if (message.sender === 'Rafat Fatima') {
+                const messagesContainer = document.getElementById('messagesContainer');
+                const noMessages = document.getElementById('noMessages');
+                
+                if (noMessages) noMessages.style.display = 'none';
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.innerHTML = `
+                    <strong>${message.sender}</strong><br>
+                    ${message.text}<br>
+                    <small>${new Date(message.timestamp).toLocaleString()}</small>
+                `;
+                
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

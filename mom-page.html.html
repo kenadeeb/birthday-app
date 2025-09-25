@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Rafat Fatima!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 800px; width: 100%; background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #764ba2; }
+        h2 { font-size: 1.8rem; margin-bottom: 20px; color: #667eea; }
+        .birthday-message { background: rgba(255, 255, 255, 0.7); padding: 20px; border-radius: 15px; margin-bottom: 30px; }
+        .arabic-message { font-size: 1.5rem; direction: rtl; margin: 20px 0; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px; color: #764ba2; }
+        .chatbot-section { background: rgba(255, 255, 255, 0.7); border-radius: 15px; padding: 20px; margin-top: 20px; }
+        .chat-container { height: 300px; overflow-y: auto; padding: 15px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; margin-bottom: 15px; border: 1px solid #ddd; }
+        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; }
+        .user-message { background: rgba(102, 126, 234, 0.1); margin-left: auto; border-bottom-right-radius: 5px; text-align: right; }
+        .bot-message { background: rgba(255, 107, 107, 0.1); border-bottom-left-radius: 5px; text-align: left; }
+        .input-area { display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 50px; background: rgba(255, 255, 255, 0.9); }
+        button { background: #667eea; border: none; border-radius: 50%; width: 50px; height: 50px; color: white; cursor: pointer; }
+        .connection-status { position: fixed; top: 10px; right: 10px; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
+        .connected { background: #4CAF50; color: white; }
+        .disconnected { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">Connecting...</div>
+    <div class="container">
+        <header>
+            <h1>🎉 Happy Birthday! 🎂</h1>
+            <h2>Rafat Fatima</h2>
+            <p>To the world's best mother and teacher!</p>
+        </header>
+        <div class="birthday-message">
+            <p>Dear Mom, on your birthday I wish you a year filled with happiness, health, and blessings.</p>
+            <div class="arabic-message">كل عام وأنت إلى الله أقرب، وإلينا أحنّ وأغلى. عيد ميلاد سعيد يا أغلى أم في الوجود!</div>
+            <p>With all my love and appreciation,<br>Your son Adeeb Zahid</p>
+        </div>
+        <div class="chatbot-section">
+            <h3><i class="fas fa-robot"></i> Message Your Son Adeeb</h3>
+            <div class="chat-container" id="chatContainer">
+                <div class="message bot-message"><p>Hello Mrs. Rafat! Happy birthday!</p></div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Type your message for Adeeb here...">
+                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // This will be updated after we get the backend URL
+        const socket = io('YOUR_BACKEND_URL_HERE');
+        
+        socket.on('connect', () => {
+            document.getElementById('connectionStatus').textContent = 'Connected ✓';
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+        });
+        
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        function addMessage(message, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = `<p>${message}</p>`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function handleUserMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+            
+            addMessage(message, true);
+            userInput.value = '';
+            
+            socket.emit('sendMessage', {
+                text: message,
+                sender: 'Rafat Fatima',
+                timestamp: new Date()
+            });
+        }
+        
+        sendBtn.addEventListener('click', handleUserMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleUserMessage();
+        });
+    </script>
+</body>
+</html>
