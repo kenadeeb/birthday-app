@@ -31,7 +31,7 @@
     </div>
 
     <script>
-        const socket = io('YOUR_BACKEND_URL_HERE');
+        const socket = io('https://birthday-app-backend-tt9f.onrender.com');
         
         socket.on('connect', () => {
             document.getElementById('connectionStatus').textContent = 'Connected ✓';
