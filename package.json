@@ -1,7 +1,7 @@
 {
   "name": "birthday-app-backend",
   "version": "1.0.0",
-  "description": "Backend for Rafat Fatima's birthday app",
+  "description": "Backend for Rafat Fatima's birthday app with auto-delete",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
