@@ -633,7 +633,7 @@
                 socket.emit('sendMessage', messageData);
                 
                 // Also send via REST API as backup
-                fetch('https://birthday-app-backend.onrender.com/api/messages', {
+                fetch('https://birthday-app-backend-tt9f.onrender.com/api/messages', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -750,7 +750,7 @@
             createConfetti();
             
             // Load previous messages from API
-            fetch('https://birthday-app-backend.onrender.com/api/messages')
+            fetch('https://birthday-app-backend-tt9f.onrender.com/api/messages')
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
