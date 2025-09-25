@@ -99,7 +99,6 @@
             border-radius: 15px;
             margin-bottom: 30px;
             text-align: center;
-            animation: fadeIn 2s;
         }
         
         .birthday-message p {
@@ -295,26 +294,50 @@
             position: fixed;
             top: 10px;
             right: 10px;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
             z-index: 1000;
             transition: all 0.3s;
+            font-weight: bold;
         }
         
         .connected {
             background: #4CAF50;
             color: white;
+            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
         }
         
         .disconnected {
             background: #f44336;
             color: white;
+            box-shadow: 0 2px 10px rgba(244, 67, 54, 0.3);
         }
         
         .connecting {
             background: #ff9800;
             color: white;
+            box-shadow: 0 2px 10px rgba(255, 152, 0, 0.3);
+        }
+        
+        .connection-test {
+            background: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+        }
+        
+        .debug-info {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            display: none;
         }
         
         @keyframes fall {
@@ -324,8 +347,18 @@
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
         }
         
         @media (max-width: 600px) {
@@ -349,7 +382,7 @@
 </head>
 <body>
     <div class="connection-status connecting" id="connectionStatus">
-        <i class="fas fa-spinner fa-spin"></i> Connecting...
+        <i class="fas fa-spinner fa-spin"></i> Connecting to Server...
     </div>
     
     <div class="container">
@@ -360,10 +393,19 @@
                 <p>This special application was created just for you on your birthday!</p>
                 <p>Click the button below to discover your personalized birthday experience.</p>
             </div>
-            <button class="start-button" id="startButton">
-                Open Your Gift <i class="fas fa-gift"></i>
+            <button class="start-button pulse" id="startButton">
+                <i class="fas fa-gift"></i> Open Your Gift
             </button>
             <p class="developer">Developed with love by Adeeb Zahid</p>
+            
+            <!-- Connection Test Button -->
+            <button class="connection-test" id="testConnection">
+                <i class="fas fa-wifi"></i> Test Connection
+            </button>
+            
+            <div class="debug-info" id="debugInfo">
+                <!-- Debug info will appear here -->
+            </div>
         </div>
         
         <!-- Main Application Content -->
@@ -395,7 +437,7 @@
                 
                 <div class="chat-container" id="chatContainer">
                     <div class="message bot-message">
-                        <p>Hello Mrs. Rafat! Happy birthday! Send a message or upload files to Adeeb using the options below.</p>
+                        <p>Hello Mrs. Rafat! Happy birthday! I'm connecting to the server...</p>
                     </div>
                 </div>
                 
@@ -415,17 +457,21 @@
                 
                 <!-- Input Area -->
                 <div class="input-area">
-                    <input type="text" id="userInput" placeholder="Type your message for Adeeb here...">
-                    <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+                    <input type="text" id="userInput" placeholder="Type your message for Adeeb here..." disabled>
+                    <button id="sendBtn" disabled><i class="fas fa-paper-plane"></i></button>
                 </div>
                 
                 <!-- File Upload -->
-                <input type="file" id="fileInput" class="file-input" multiple>
-                <button class="upload-btn" id="uploadBtn">
+                <input type="file" id="fileInput" class="file-input" multiple disabled>
+                <button class="upload-btn" id="uploadBtn" disabled>
                     <i class="fas fa-paperclip"></i> Attach Files (Photos, Documents, etc.)
                 </button>
                 
                 <div class="message-status" id="messageStatus"></div>
+                
+                <button class="connection-test" id="reconnectBtn" style="width: 100%; margin-top: 10px;">
+                    <i class="fas fa-redo"></i> Reconnect to Server
+                </button>
             </div>
             
             <div class="footer">
@@ -440,6 +486,9 @@
         const welcomeScreen = document.getElementById('welcomeScreen');
         const appContent = document.getElementById('appContent');
         const startButton = document.getElementById('startButton');
+        const testConnectionBtn = document.getElementById('testConnection');
+        const reconnectBtn = document.getElementById('reconnectBtn');
+        const debugInfo = document.getElementById('debugInfo');
         const chatContainer = document.getElementById('chatContainer');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -455,41 +504,152 @@
 
         let socket = null;
         let selectedFiles = [];
+        let isConnected = false;
         
-        // Function to initialize socket connection
+        // BACKEND URL - REPLACE THIS WITH YOUR ACTUAL RENDER URL
+        const BACKEND_URL = 'https://birthday-app-backend-tt9f.onrender.com'; // CHANGE THIS!
+        
+        // Function to test backend connection
+        async function testBackendConnection() {
+            try {
+                debugInfo.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing connection...';
+                debugInfo.style.display = 'block';
+                
+                const response = await fetch(`${BACKEND_URL}/health`, {
+                    method: 'GET',
+                    timeout: 10000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    debugInfo.innerHTML = `
+                        <div style="color: #4CAF50;">
+                            <i class="fas fa-check-circle"></i> <strong>Backend is working!</strong><br>
+                            Status: ${data.status}<br>
+                            MongoDB: ${data.mongodb}<br>
+                            Uptime: ${Math.round(data.uptime)}s
+                        </div>
+                    `;
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                debugInfo.innerHTML = `
+                    <div style="color: #f44336;">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>Connection failed!</strong><br>
+                        Error: ${error.message}<br>
+                        URL: ${BACKEND_URL}
+                    </div>
+                `;
+                return false;
+            }
+        }
+        
+        // Function to initialize socket connection with better error handling
         function initializeSocket() {
-            // REPLACE THIS WITH YOUR ACTUAL RENDER URL
-            const backendUrl = 'https://birthday-app-backend-tt9f.onrender.com';
+            console.log('🔗 Attempting to connect to:', BACKEND_URL);
             
-            console.log('Connecting to backend:', backendUrl);
+            // Clear previous connection
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
             
-            socket = io(backendUrl, {
-                transports: ['websocket', 'polling'],
-                timeout: 10000
-            });
+            connectionStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            connectionStatus.className = 'connection-status connecting';
             
-            socket.on('connect', () => {
-                console.log('✅ Connected to server successfully!');
-                connectionStatus.innerHTML = '<i class="fas fa-check"></i> Connected';
-                connectionStatus.className = 'connection-status connected';
-            });
-            
-            socket.on('disconnect', (reason) => {
-                console.log('❌ Disconnected from server:', reason);
-                connectionStatus.innerHTML = '<i class="fas fa-times"></i> Disconnected';
+            try {
+                socket = io(BACKEND_URL, {
+                    transports: ['websocket', 'polling'],
+                    timeout: 10000,
+                    reconnection: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000
+                });
+                
+                socket.on('connect', () => {
+                    console.log('✅ Connected to server successfully!');
+                    isConnected = true;
+                    connectionStatus.innerHTML = '<i class="fas fa-check"></i> Connected to Adeeb!';
+                    connectionStatus.className = 'connection-status connected';
+                    
+                    // Enable input fields
+                    userInput.disabled = false;
+                    sendBtn.disabled = false;
+                    uploadBtn.disabled = false;
+                    fileInput.disabled = false;
+                    
+                    // Update chat message
+                    const botMessage = chatContainer.querySelector('.bot-message');
+                    if (botMessage) {
+                        botMessage.innerHTML = '<p>✅ <strong>Connected!</strong> You can now send messages to Adeeb!</p>';
+                    }
+                    
+                    addMessage('Connection established! You can now chat with Adeeb.', false);
+                });
+                
+                socket.on('disconnect', (reason) => {
+                    console.log('❌ Disconnected from server:', reason);
+                    isConnected = false;
+                    connectionStatus.innerHTML = '<i class="fas fa-times"></i> Disconnected';
+                    connectionStatus.className = 'connection-status disconnected';
+                    
+                    // Disable input fields
+                    userInput.disabled = true;
+                    sendBtn.disabled = true;
+                    uploadBtn.disabled = true;
+                    fileInput.disabled = true;
+                    
+                    addMessage('Connection lost. Trying to reconnect...', false);
+                });
+                
+                socket.on('connect_error', (error) => {
+                    console.error('Connection error:', error);
+                    isConnected = false;
+                    connectionStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Connection Failed';
+                    connectionStatus.className = 'connection-status disconnected';
+                    
+                    addMessage(`Connection error: ${error.message}`, false);
+                });
+                
+                socket.on('connected', (data) => {
+                    console.log('Server connection confirmed:', data);
+                    addMessage('Server connection established successfully!', false);
+                });
+                
+                // Listen for new messages from Adeeb
+                socket.on('newMessage', (message) => {
+                    console.log('📩 Received message from Adeeb:', message);
+                    if (message.sender === 'Adeeb') {
+                        if (message.isFile && message.files) {
+                            addMessage(message.text, false, true, {
+                                name: message.files[0].name,
+                                size: formatFileSize(message.files[0].size),
+                                icon: getFileIcon({ type: message.files[0].type })
+                            });
+                        } else {
+                            addMessage(message.text, false);
+                        }
+                    }
+                });
+                
+                socket.on('error', (error) => {
+                    console.error('Socket error:', error);
+                    addMessage('Error: ' + error.message, false);
+                });
+                
+            } catch (error) {
+                console.error('Failed to initialize socket:', error);
+                connectionStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Connection Error';
                 connectionStatus.className = 'connection-status disconnected';
-            });
-            
-            socket.on('connect_error', (error) => {
-                console.error('Connection error:', error);
-                connectionStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Connection Failed';
-                connectionStatus.className = 'connection-status disconnected';
-            });
+                addMessage('Failed to connect to server: ' + error.message, false);
+            }
         }
         
         // Create confetti effect
         function createConfetti() {
-            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', #ff8e6b', '#6bffb8'];
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#ff8e6b', '#6bffb8'];
             for (let i = 0; i < 100; i++) {
                 const confetti = document.createElement('div');
                 confetti.className = 'confetti';
@@ -594,8 +754,8 @@
         
         // Function to send message to backend
         async function sendMessageToBackend(message, files = []) {
-            if (!socket || !socket.connected) {
-                addMessage('⚠️ Not connected. Please wait for connection...', false);
+            if (!isConnected || !socket) {
+                addMessage('❌ Not connected to server. Please wait...', false);
                 return false;
             }
             
@@ -623,41 +783,43 @@
                     expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
                 };
                 
-                console.log('Sending message with files:', {
-                    hasFiles: files.length > 0,
-                    fileCount: files.length,
-                    fileNames: files.map(f => f.name)
-                });
+                console.log('Sending message:', messageData);
                 
                 // Send via Socket.io
                 socket.emit('sendMessage', messageData);
                 
                 // Also send via REST API as backup
-                fetch('https://birthday-app-backend-tt9f.onrender.com/api/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(messageData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Message saved via API:', data);
-                })
-                .catch(error => {
-                    console.error('Error saving message via API:', error);
-                });
+                try {
+                    const response = await fetch(`${BACKEND_URL}/api/messages`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(messageData)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Message saved via API');
+                    }
+                } catch (apiError) {
+                    console.warn('API backup failed:', apiError);
+                }
                 
                 return true;
             } catch (error) {
-                console.error('Error processing files:', error);
-                addMessage('❌ Error sending file. Please try again.', false);
+                console.error('Error sending message:', error);
+                addMessage('❌ Error sending message: ' + error.message, false);
                 return false;
             }
         }
         
         // Function to handle user message
         async function handleUserMessage() {
+            if (!isConnected) {
+                addMessage('Please wait for connection...', false);
+                return;
+            }
+            
             const message = userInput.value.trim();
             const hasFiles = selectedFiles.length > 0;
             
@@ -714,6 +876,9 @@
             initializeSocket();
         });
         
+        testConnectionBtn.addEventListener('click', testBackendConnection);
+        reconnectBtn.addEventListener('click', initializeSocket);
+        
         sendBtn.addEventListener('click', handleUserMessage);
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -748,32 +913,14 @@
         // Load previous messages when page loads
         window.addEventListener('load', () => {
             createConfetti();
+            addMessage('Welcome! Click "Open Your Gift" to start...', false);
             
-            // Load previous messages from API
-            fetch('https://birthday-app-backend-tt9f.onrender.com/api/messages')
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(messages => {
-                    console.log('Loaded previous messages:', messages.length);
-                    messages.forEach(message => {
-                        if (message.sender === 'Adeeb') {
-                            if (message.isFile && message.files && message.files.length > 0) {
-                                addMessage(message.text, false, true, {
-                                    name: message.files[0].name,
-                                    size: formatFileSize(message.files[0].size),
-                                    icon: getFileIcon({ type: message.files[0].type })
-                                });
-                            } else {
-                                addMessage(message.text, false);
-                            }
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading messages:', error);
-                });
+            // Test connection on load
+            testBackendConnection().then(success => {
+                if (success) {
+                    debugInfo.innerHTML += '<br><span style="color: #4CAF50;">✅ Backend is ready!</span>';
+                }
+            });
         });
     </script>
 </body>
