@@ -7,89 +7,696 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .container { max-width: 800px; width: 100%; background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center; }
-        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #764ba2; }
-        h2 { font-size: 1.8rem; margin-bottom: 20px; color: #667eea; }
-        .birthday-message { background: rgba(255, 255, 255, 0.7); padding: 20px; border-radius: 15px; margin-bottom: 30px; }
-        .arabic-message { font-size: 1.5rem; direction: rtl; margin: 20px 0; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px; color: #764ba2; }
-        .chatbot-section { background: rgba(255, 255, 255, 0.7); border-radius: 15px; padding: 20px; margin-top: 20px; }
-        .chat-container { height: 300px; overflow-y: auto; padding: 15px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; margin-bottom: 15px; border: 1px solid #ddd; }
-        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; }
-        .user-message { background: rgba(102, 126, 234, 0.1); margin-left: auto; border-bottom-right-radius: 5px; text-align: right; }
-        .bot-message { background: rgba(255, 107, 107, 0.1); border-bottom-left-radius: 5px; text-align: left; }
-        .input-area { display: flex; gap: 10px; }
-        input[type="text"] { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 50px; background: rgba(255, 255, 255, 0.9); }
-        button { background: #667eea; border: none; border-radius: 50%; width: 50px; height: 50px; color: white; cursor: pointer; }
-        .connection-status { position: fixed; top: 10px; right: 10px; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
-        .connected { background: #4CAF50; color: white; }
-        .disconnected { background: #f44336; color: white; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            text-align: center;
+        }
+        
+        .app-content {
+            display: none;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #764ba2;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        
+        .welcome-message {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        
+        .developer {
+            font-style: italic;
+            margin-top: 30px;
+            color: #666;
+        }
+        
+        .start-button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .start-button:hover {
+            background: #ff5252;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .birthday-message {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            animation: fadeIn 2s;
+        }
+        
+        .birthday-message p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .arabic-message {
+            font-size: 1.5rem;
+            direction: rtl;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            color: #764ba2;
+        }
+        
+        .chatbot-section {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .chat-container {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            animation: fadeIn 0.5s;
+        }
+        
+        .user-message {
+            background: rgba(102, 126, 234, 0.1);
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+            text-align: right;
+        }
+        
+        .bot-message {
+            background: rgba(255, 107, 107, 0.1);
+            border-bottom-left-radius: 5px;
+            text-align: left;
+        }
+        
+        .file-message {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        input[type="text"]::placeholder {
+            color: #999;
+        }
+        
+        button {
+            background: #667eea;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button:hover {
+            background: #5a6fd8;
+            transform: scale(1.05);
+        }
+        
+        .upload-btn {
+            background: #4ecdc4;
+            width: 100%;
+            border-radius: 50px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .upload-btn:hover {
+            background: #3db8b0;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .praise-message {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f0f;
+            border-radius: 50%;
+            animation: fall linear forwards;
+            z-index: -1;
+        }
+        
+        .message-status {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+        
+        .file-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .file-icon {
+            font-size: 2rem;
+            color: #667eea;
+        }
+        
+        .delete-file {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+        
+        .connected {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .disconnected {
+            background: #f44336;
+            color: white;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .chat-container {
+                height: 250px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="connection-status" id="connectionStatus">Connecting...</div>
+    
     <div class="container">
-        <header>
-            <h1>🎉 Happy Birthday! 🎂</h1>
-            <h2>Rafat Fatima</h2>
-            <p>To the world's best mother and teacher!</p>
-        </header>
-        <div class="birthday-message">
-            <p>Dear Mom, on your birthday I wish you a year filled with happiness, health, and blessings.</p>
-            <div class="arabic-message">كل عام وأنت إلى الله أقرب، وإلينا أحنّ وأغلى. عيد ميلاد سعيد يا أغلى أم في الوجود!</div>
-            <p>With all my love and appreciation,<br>Your son Adeeb Zahid</p>
-        </div>
-        <div class="chatbot-section">
-            <h3><i class="fas fa-robot"></i> Message Your Son Adeeb</h3>
-            <div class="chat-container" id="chatContainer">
-                <div class="message bot-message"><p>Hello Mrs. Rafat! Happy birthday!</p></div>
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcomeScreen">
+            <h1>Welcome Rafat Fatima!</h1>
+            <div class="welcome-message">
+                <p>This special application was created just for you on your birthday!</p>
+                <p>Click the button below to discover your personalized birthday experience.</p>
             </div>
-            <div class="input-area">
-                <input type="text" id="userInput" placeholder="Type your message for Adeeb here...">
-                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+            <button class="start-button" id="startButton">
+                Open Your Gift <i class="fas fa-gift"></i>
+            </button>
+            <p class="developer">Developed with love by Adeeb Zahid</p>
+        </div>
+        
+        <!-- Main Application Content -->
+        <div class="app-content" id="appContent">
+            <header>
+                <h1>🎉 Happy Birthday! 🎂</h1>
+                <h2>Rafat Fatima</h2>
+                <p>To the world's best mother and teacher!</p>
+            </header>
+            
+            <div class="birthday-message">
+                <p>Dear Mom, on your birthday I wish you a year filled with happiness, health, and blessings. You are my inspiration and your support is priceless.</p>
+                
+                <div class="arabic-message">
+                    <p>كل عام وأنت إلى الله أقرب، وإلينا أحنّ وأغلى. دمتِ نبراسًا ينير دروبنا، ويضيء أيامنا. عيد ميلاد سعيد يا أغلى أم في الوجود!</p>
+                </div>
+                
+                <p>With all my love and appreciation,<br>Your son Adeeb Zahid</p>
+            </div>
+            
+            <div class="praise-message">
+                <p><i class="fas fa-heart"></i> You are an amazing mother and an inspiring teacher! Your dedication to education is truly admirable.</p>
+                <p class="arabic-message">أنت أم رائعة ومعلمة ملهمة! تفانيك في التعليم جدير بالإعجاب حقًا.</p>
+            </div>
+            
+            <div class="chatbot-section">
+                <h3><i class="fas fa-robot"></i> Message Your Son Adeeb</h3>
+                <p>Send messages, photos, documents - anything you want! All files will be automatically deleted after 2 hours for privacy.</p>
+                
+                <div class="chat-container" id="chatContainer">
+                    <div class="message bot-message">
+                        <p>Hello Mrs. Rafat! Happy birthday! Send a message or upload files to Adeeb using the options below.</p>
+                    </div>
+                </div>
+                
+                <!-- File Preview -->
+                <div class="file-preview" id="filePreview">
+                    <div class="file-info">
+                        <i class="fas fa-file file-icon" id="fileIcon"></i>
+                        <div>
+                            <strong id="fileName">File Name</strong>
+                            <div id="fileSize">Size</div>
+                        </div>
+                        <button class="delete-file" id="deleteFile">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="input-area">
+                    <input type="text" id="userInput" placeholder="Type your message for Adeeb here...">
+                    <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                
+                <!-- File Upload -->
+                <input type="file" id="fileInput" class="file-input" multiple>
+                <button class="upload-btn" id="uploadBtn">
+                    <i class="fas fa-paperclip"></i> Attach Files (Photos, Documents, etc.)
+                </button>
+                
+                <div class="message-status" id="messageStatus"></div>
+            </div>
+            
+            <div class="footer">
+                <p>Specially developed for my mother Rafat Fatima by Adeeb Zahid</p>
+                <p>© 2023 - All rights reserved | Files auto-delete after 2 hours</p>
             </div>
         </div>
     </div>
 
     <script>
-        // This will be updated after we get the backend URL
-        const socket = io('https://birthday-app-backend-tt9f.onrender.com');
+        // Socket.io connection - Replace with your actual backend URL
+        const socket = io('https://your-backend-url.onrender.com');
+        
+        // Connection status
+        const connectionStatus = document.getElementById('connectionStatus');
         
         socket.on('connect', () => {
-            document.getElementById('connectionStatus').textContent = 'Connected ✓';
-            document.getElementById('connectionStatus').className = 'connection-status connected';
+            connectionStatus.textContent = 'Connected ✓';
+            connectionStatus.className = 'connection-status connected';
+            console.log('Connected to server');
         });
         
+        socket.on('disconnect', () => {
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.className = 'connection-status disconnected';
+            console.log('Disconnected from server');
+        });
+        
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#ff8e6b', '#6bffb8'];
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+        
+        // DOM Elements
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const appContent = document.getElementById('appContent');
+        const startButton = document.getElementById('startButton');
         const chatContainer = document.getElementById('chatContainer');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileIcon = document.getElementById('fileIcon');
+        const deleteFile = document.getElementById('deleteFile');
+        const messageStatus = document.getElementById('messageStatus');
         
-        function addMessage(message, isUser) {
+        let selectedFiles = [];
+        
+        // File type icons mapping
+        const fileIcons = {
+            'image': 'fa-image',
+            'pdf': 'fa-file-pdf',
+            'word': 'fa-file-word',
+            'excel': 'fa-file-excel',
+            'video': 'fa-file-video',
+            'audio': 'fa-file-audio',
+            'archive': 'fa-file-archive',
+            'default': 'fa-file'
+        };
+        
+        // Get file icon based on type
+        function getFileIcon(file) {
+            const type = file.type.split('/')[0];
+            if (fileIcons[type]) return fileIcons[type];
+            
+            if (file.type.includes('pdf')) return fileIcons.pdf;
+            if (file.type.includes('word') || file.type.includes('document')) return fileIcons.word;
+            if (file.type.includes('excel') || file.type.includes('spreadsheet')) return fileIcons.excel;
+            if (file.type.includes('zip') || file.type.includes('rar')) return fileIcons.archive;
+            
+            return fileIcons.default;
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Show file preview
+        function showFilePreview(file) {
+            selectedFiles = [file];
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileIcon.className = `fas ${getFileIcon(file)} file-icon`;
+            filePreview.style.display = 'block';
+        }
+        
+        // Clear file preview
+        function clearFilePreview() {
+            selectedFiles = [];
+            filePreview.style.display = 'none';
+            fileInput.value = '';
+        }
+        
+        // Function to add message to chat
+        function addMessage(message, isUser, isFile = false, fileInfo = null) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            messageDiv.innerHTML = `<p>${message}</p>`;
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'} ${isFile ? 'file-message' : ''}`;
+            
+            if (isFile && fileInfo) {
+                messageDiv.innerHTML = `
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">
+                        ${isUser ? 'You' : 'Adeeb'} • File
+                    </div>
+                    <p>${message}</p>
+                    <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.5); border-radius: 5px;">
+                        <i class="fas ${fileInfo.icon}"></i> ${fileInfo.name} (${fileInfo.size})
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">
+                        ${isUser ? 'You' : 'Adeeb'}
+                    </div>
+                    <p>${message}</p>
+                `;
+            }
+            
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
         
-        function handleUserMessage() {
-            const message = userInput.value.trim();
-            if (message === '') return;
-            
-            addMessage(message, true);
-            userInput.value = '';
-            
-            socket.emit('sendMessage', {
+        // Function to send message to backend
+        function sendMessageToBackend(message, files = []) {
+            const messageData = {
                 text: message,
                 sender: 'Rafat Fatima',
-                timestamp: new Date()
+                timestamp: new Date(),
+                isFile: files.length > 0,
+                files: files.map(file => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    // In a real app, you'd upload the file and get a URL
+                    url: URL.createObjectURL(file)
+                })),
+                // Set expiration time (2 hours from now)
+                expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
+            };
+            
+            // Send via Socket.io
+            socket.emit('sendMessage', messageData);
+            
+            // Also send via REST API as backup
+            fetch('https://your-backend-url.onrender.com/api/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(messageData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Message saved:', data);
+            })
+            .catch(error => {
+                console.error('Error saving message:', error);
             });
         }
         
+        // Function to handle user message
+        function handleUserMessage() {
+            const message = userInput.value.trim();
+            const hasFiles = selectedFiles.length > 0;
+            
+            if (message === '' && !hasFiles) return;
+            
+            if (hasFiles) {
+                // Send file with optional message
+                addMessage(message || `Sent ${selectedFiles[0].name}`, true, true, {
+                    name: selectedFiles[0].name,
+                    size: formatFileSize(selectedFiles[0].size),
+                    icon: getFileIcon(selectedFiles[0])
+                });
+                sendMessageToBackend(message || `File: ${selectedFiles[0].name}`, selectedFiles);
+                clearFilePreview();
+            } else {
+                // Send text message only
+                addMessage(message, true);
+                sendMessageToBackend(message);
+            }
+            
+            userInput.value = '';
+            
+            // Show sending status
+            messageStatus.textContent = "Message sent to Adeeb!";
+            messageStatus.style.color = "#25D366";
+            
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                messageStatus.textContent = "";
+            }, 3000);
+        }
+        
+        // Listen for new messages from Adeeb
+        socket.on('newMessage', (message) => {
+            if (message.sender === 'Adeeb') {
+                if (message.isFile && message.files) {
+                    addMessage(message.text, false, true, {
+                        name: message.files[0].name,
+                        size: formatFileSize(message.files[0].size),
+                        icon: getFileIcon({ type: message.files[0].type })
+                    });
+                } else {
+                    addMessage(message.text, false);
+                }
+            }
+        });
+        
+        // Event listeners
+        startButton.addEventListener('click', function() {
+            welcomeScreen.style.display = 'none';
+            appContent.style.display = 'block';
+            createConfetti();
+        });
+        
         sendBtn.addEventListener('click', handleUserMessage);
         userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleUserMessage();
+            if (e.key === 'Enter') {
+                handleUserMessage();
+            }
+        });
+        
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                showFilePreview(e.target.files[0]);
+            }
+        });
+        
+        deleteFile.addEventListener('click', clearFilePreview);
+        
+        // Load previous messages when page loads
+        window.addEventListener('load', () => {
+            createConfetti();
+            
+            // Fetch previous messages
+            fetch('https://your-backend-url.onrender.com/api/messages')
+                .then(response => response.json())
+                .then(messages => {
+                    messages.forEach(message => {
+                        if (message.sender === 'Adeeb') {
+                            if (message.isFile && message.files) {
+                                addMessage(message.text, false, true, {
+                                    name: message.files[0].name,
+                                    size: formatFileSize(message.files[0].size),
+                                    icon: getFileIcon({ type: message.files[0].type })
+                                });
+                            } else {
+                                addMessage(message.text, false);
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading messages:', error);
+                });
         });
     </script>
 </body>
